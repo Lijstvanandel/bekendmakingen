@@ -15,8 +15,9 @@ import { BekendmakingenDashboard } from './components/BekendmakingenDashboard';
 import { EmbedDataproductModal } from './components/EmbedDataproductModal';
 import { YearSliderAndMonthlyChart } from './components/YearSliderAndMonthlyChart';
 import { KernStatistiekenModal } from './components/KernStatistiekenModal';
+import { SiteFooter } from './components/SiteFooter';
 import './firebase';
-import { Clock, MapPin, RefreshCw, Layers } from 'lucide-react';
+import { Clock, MapPin, RefreshCw, Layers, ChevronDown, Code2 } from 'lucide-react';
 
 export default function App() {
   const [bekendmakingen, setBekendmakingen] = useState<Bekendmaking[]>([]);
@@ -162,7 +163,11 @@ export default function App() {
   );
 
   return (
-    <div className="flex flex-col h-screen w-screen overflow-hidden bg-[var(--bg-main)] text-[var(--text-main)] font-sans antialiased">
+    <div
+      className={`flex flex-col bg-[var(--bg-main)] text-[var(--text-main)] font-sans antialiased ${
+        isEmbed ? 'h-screen w-screen overflow-hidden' : 'min-h-screen w-screen overflow-x-hidden'
+      }`}
+    >
       {/* Top Navigation Bar */}
       <TopNavbar
         showFilterPanel={showFilterPanel}
@@ -180,7 +185,11 @@ export default function App() {
       />
 
       {/* Main View Area: Sidebar + Map */}
-      <main className="flex-1 flex relative overflow-hidden">
+      <main
+        className={`w-full flex relative overflow-hidden shrink-0 ${
+          isEmbed ? 'flex-1' : 'h-[calc(100vh-3.5rem)] min-h-[580px]'
+        }`}
+      >
         {/* Filter Panel (Slide-in / Expandable) */}
         {showFilterPanel && (
           <BekendmakingFilterPanel
@@ -211,7 +220,7 @@ export default function App() {
           />
 
           {/* Year Slider and Monthly Bar Chart Docked on Map */}
-          <div className="absolute bottom-16 sm:bottom-20 left-3 right-3 sm:right-auto sm:w-[520px] md:w-[580px] z-[510] pointer-events-auto">
+          <div className="absolute bottom-14 sm:bottom-16 left-3 right-3 sm:right-auto sm:w-[520px] md:w-[580px] z-[510] pointer-events-auto">
             <YearSliderAndMonthlyChart
               items={bekendmakingen}
               filters={filters}
@@ -219,6 +228,33 @@ export default function App() {
               onSelectKernStat={(kern) => setSelectedKernStat(kern)}
             />
           </div>
+
+          {/* Quick Footer & Embed Floating Shortcut (Visible on Map) */}
+          {!isEmbed && (
+            <div className="absolute bottom-3 right-3 z-[510] hidden sm:flex items-center gap-2 pointer-events-auto">
+              <button
+                type="button"
+                onClick={() => setIsEmbedModalOpen(true)}
+                className="px-2.5 py-1 rounded-[5px] bg-[var(--bg-card)]/90 backdrop-blur-xs hover:bg-[var(--bg-elevated)] border border-amber-500/40 text-amber-300 text-xs font-semibold flex items-center gap-1.5 shadow-lg transition-colors cursor-pointer"
+                title="Kaart Insluiten (Embed HTML)"
+              >
+                <Code2 className="w-3.5 h-3.5 text-amber-400" />
+                <span>Insluiten</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const footer = document.querySelector('footer.site-footer');
+                  footer?.scrollIntoView({ behavior: 'smooth' });
+                }}
+                className="px-2.5 py-1 rounded-[5px] bg-[var(--bg-card)]/90 backdrop-blur-xs hover:bg-[var(--bg-elevated)] border border-[var(--border-subtle)] text-[var(--text-muted)] hover:text-[var(--text-main)] text-xs flex items-center gap-1 shadow-lg transition-colors cursor-pointer"
+                title="Scroll naar de footer met alle kernen en bronnen"
+              >
+                <span>Footer & Kernen</span>
+                <ChevronDown className="w-3 h-3 text-[var(--text-dim)]" />
+              </button>
+            </div>
+          )}
 
           {/* Loading Indicator */}
           {isLoading && (
@@ -229,6 +265,24 @@ export default function App() {
           )}
         </section>
       </main>
+
+      {/* Restored Site Footer (Conform bestandkaart.html styling & layout) */}
+      {!isEmbed && (
+        <SiteFooter
+          onOpenEmbedModal={() => setIsEmbedModalOpen(true)}
+          onOpenCycleModal={() => setIsCycleModalOpen(true)}
+          onOpenDashboard={() => setIsDashboardOpen(true)}
+          onExportCSV={handleExportCSV}
+          onSelectKern={(kern) => {
+            setSelectedKernStat(kern);
+            // Scroll back up to the map so user can see it
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
+          physicalCount={physicalCount}
+          totalCount={bekendmakingen.length}
+          lastScannedAt={cycleStatus.lastScannedAt}
+        />
+      )}
 
       {/* Detail Modal for Selected Publication */}
       {selectedItem && (
@@ -257,9 +311,11 @@ export default function App() {
           onFilterByKern={(kern) => {
             setFilters((prev) => ({ ...prev, selectedKern: kern }));
             setSelectedKernStat(null);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
           }}
           onCenterMap={(lat, lng, zoom = 14) => {
             handleFlyTo(lat, lng, zoom);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
           }}
         />
       )}
@@ -282,13 +338,15 @@ export default function App() {
           if (item.lat && item.lng) {
             handleFlyTo(item.lat, item.lng, 16);
           }
+          window.scrollTo({ top: 0, behavior: 'smooth' });
         }}
       />
 
-      {/* Embed Modal */}
+      {/* Restored & Enhanced Embed Modal */}
       <EmbedDataproductModal
         isOpen={isEmbedModalOpen}
         onClose={() => setIsEmbedModalOpen(false)}
+        selectedKern={filters.selectedKern || selectedKernStat}
       />
     </div>
   );

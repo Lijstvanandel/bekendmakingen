@@ -1,5 +1,5 @@
 import React from 'react';
-import { RefreshCw, Download, SlidersHorizontal, MapPin, Clock, BarChart3, Code2 } from 'lucide-react';
+import { RefreshCw, Download, SlidersHorizontal, MapPin, Clock, BarChart3, Code2, ExternalLink } from 'lucide-react';
 import { ScrapeCycleStatus } from '../types/bekendmakingen';
 
 interface TopNavbarProps {
@@ -101,6 +101,29 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
 
       {/* Zone 3: Actions */}
       <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+        {!isEmbed ? (
+          <button
+            type="button"
+            onClick={onOpenEmbedModal}
+            className="px-2.5 sm:px-3 py-1.5 text-xs font-semibold text-amber-300 bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 rounded-[5px] transition-colors whitespace-nowrap shrink-0 flex items-center gap-1.5 cursor-pointer shadow-xs"
+            title="Genereer HTML iframe code om de kaart in te sluiten"
+          >
+            <Code2 className="w-3.5 h-3.5 text-amber-400" />
+            <span className="hidden sm:inline">Insluiten</span>
+          </button>
+        ) : (
+          <a
+            href={typeof window !== 'undefined' ? `${window.location.origin}${window.location.pathname}` : '/'}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-2.5 sm:px-3 py-1.5 text-xs font-semibold text-amber-300 bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 rounded-[5px] transition-colors whitespace-nowrap shrink-0 flex items-center gap-1.5 cursor-pointer shadow-xs"
+            title="Open de volledige kaart in een nieuw venster"
+          >
+            <ExternalLink className="w-3.5 h-3.5 text-amber-400" />
+            <span className="hidden sm:inline">Volledige kaart</span>
+          </a>
+        )}
+
         <button
           type="button"
           onClick={onTriggerScan}
