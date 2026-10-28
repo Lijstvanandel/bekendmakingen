@@ -1,0 +1,79 @@
+{
+  "entities": {
+    "BekendmakingScanRecord": {
+      "title": "BekendmakingScanRecord",
+      "description": "Logboek van een 24-uurs scan en fysieke evaluatiecyclus voor Gemeente Steenwijkerland bekendmakingen.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "Unieke identificatie van de scancyclus"
+        },
+        "ownerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "UID van de beheerder of geauthenticeerde gebruiker"
+        },
+        "timestamp": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "description": "ISO timestamp van de scan"
+        },
+        "totalCount": {
+          "type": "number",
+          "description": "Totaal aantal gescrapede bekendmakingen"
+        },
+        "physicalCount": {
+          "type": "number",
+          "description": "Aantal geclassificeerde fysieke bekendmakingen"
+        },
+        "geolocatedCount": {
+          "type": "number",
+          "description": "Aantal geolokaliseerde en op de kaart geplotte bekendmakingen"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["completed", "in_progress", "failed"],
+          "minLength": 6,
+          "maxLength": 16,
+          "description": "Status van de cyclus"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Tijdstip van aanmaken"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Tijdstip van laatste wijziging"
+        }
+      },
+      "required": [
+        "id",
+        "ownerId",
+        "timestamp",
+        "totalCount",
+        "physicalCount",
+        "geolocatedCount",
+        "status",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/bekendmakingScans/{scanId}": {
+      "schema": {
+        "$ref": "BekendmakingScanRecord"
+      },
+      "description": "Opslag van periodieke 24-uurs bekendmakingen scans en audit logs voor Gemeente Steenwijkerland."
+    }
+  }
+}

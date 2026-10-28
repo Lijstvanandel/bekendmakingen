@@ -1,0 +1,81 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global default-deny safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null && request.auth.token.email_verified == true;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidBekendmakingScanRecord(data) {
+      return data.keys().hasAll([
+        'id',
+        'ownerId',
+        'timestamp',
+        'totalCount',
+        'physicalCount',
+        'geolocatedCount',
+        'status',
+        'createdAt',
+        'updatedAt'
+      ]) &&
+      data.keys().hasOnly([
+        'id',
+        'ownerId',
+        'timestamp',
+        'totalCount',
+        'physicalCount',
+        'geolocatedCount',
+        'status',
+        'createdAt',
+        'updatedAt'
+      ]) &&
+      data.id is string && data.id.size() >= 1 && data.id.size() <= 128 && data.id.matches('^[a-zA-Z0-9_\\-]+$') &&
+      data.ownerId is string && data.ownerId.size() >= 1 && data.ownerId.size() <= 128 && data.ownerId.matches('^[a-zA-Z0-9_\\-]+$') &&
+      data.ownerId == request.auth.uid &&
+      data.timestamp is string && data.timestamp.size() >= 1 && data.timestamp.size() <= 64 &&
+      data.totalCount is number && data.totalCount >= 0 && data.totalCount <= 1000000 &&
+      data.physicalCount is number && data.physicalCount >= 0 && data.physicalCount <= 1000000 &&
+      data.geolocatedCount is number && data.geolocatedCount >= 0 && data.geolocatedCount <= 1000000 &&
+      data.status is string && data.status in ['completed', 'in_progress', 'failed'] &&
+      data.createdAt is timestamp &&
+      data.updatedAt is timestamp;
+    }
+
+    match /bekendmakingScans/{scanId} {
+      allow get: if isSignedIn() && isValidId(scanId) && existing().ownerId == request.auth.uid;
+      allow list: if isSignedIn() && existing().ownerId == request.auth.uid;
+      allow create: if isSignedIn() &&
+        isValidId(scanId) &&
+        isValidBekendmakingScanRecord(incoming()) &&
+        incoming().id == scanId &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time;
+      allow update: if isSignedIn() &&
+        isValidId(scanId) &&
+        isValidBekendmakingScanRecord(incoming()) &&
+        existing().ownerId == request.auth.uid &&
+        incoming().ownerId == existing().ownerId &&
+        incoming().id == existing().id &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time &&
+        incoming().diff(existing()).affectedKeys().hasOnly(['status', 'totalCount', 'physicalCount', 'geolocatedCount', 'updatedAt']);
+      allow delete: if isSignedIn() && isValidId(scanId) && existing().ownerId == request.auth.uid;
+    }
+  }
+}
